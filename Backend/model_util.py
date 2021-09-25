@@ -37,7 +37,6 @@ class CustomUnpickler(pickle.Unpickler):
 with open('model/model.pkl','rb') as f:
     unpickler = CustomUnpickler(f)
     loaded_model = unpickler.load()
-    print(loaded_model)
 
 def make_prediction(data_input):
     result = loaded_model.predict([[1,1,1,4,2,3,1,1,0,5]])
