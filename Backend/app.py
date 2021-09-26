@@ -4,6 +4,7 @@ import pickle
 import numpy as np
 from model_util import make_prediction
 import os
+import pandas as pd
 
 app = Flask(__name__)
 
@@ -28,8 +29,15 @@ def api():
 def populateDb():
     data = ""
     conn = mysql.get_db().cursor()
-    query_item = "INSERT INTO user (email,password) VALUE ('guy','123456')"
-    conn.execute(query_item)
+    user_query = "INSERT INTO user (email,password) SELECT 'superuser','123' WHERE NOT EXISTS (SELECT 1 FROM user WHERE email = 'superuser')"
+    conn.execute(user_query)
+    
+    car_query = "INSERT INTO cardetail (brand,model_name,year,type,cc,price) SELECT "
+    car_data = pd.read_excel('model/Cardetail.xlsx',index_col=0,dtype={'Model name': str,'Year':str,'CC':str,'price':str})
+    for index, row in car_data.iterrows():
+        conn.execute(car_query + "'"+str(index)+"','"+str(row['Model name'])+"','"+str(row['Year'])+"','"+str(row['Type'])+"','"+str(row['CC'])+"','"+str(row['Price'])+
+        "' WHERE NOT EXISTS (SELECT 1 FROM cardetail WHERE model_name = '"+str(row['Model name'])+"' AND year = '"+str(row['Year'])+"' )")
+
     mysql.get_db().commit()
     conn.close()
     return 'success'
