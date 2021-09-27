@@ -39,6 +39,6 @@ with open('model/model.pkl','rb') as f:
     loaded_model = unpickler.load()
 
 def make_prediction(data_input):
-    result = loaded_model.predict([[1,1,1,4,2,3,1,1,0,5]])
+    result = loaded_model.predict([data_input])
     return result
 
