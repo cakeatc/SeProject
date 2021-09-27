@@ -62,9 +62,9 @@ def register():
         }
     )
 
-@app.route('/api/predict',methods=['GET'])
-def predict():
-    result = make_prediction([1,1,1,4,2,3,1,1,0,5])
+@app.route('/api/predict/<args>',methods=['GET'])
+def predict(args):
+    result = make_prediction(np.fromstring(args,dtype=int,sep=','))
     return jsonify(
         {
             "result": result
@@ -144,7 +144,7 @@ def generateDbTable():
     create_car_detail_table_query = """CREATE TABLE IF NOT EXISTS `car_detail` (
         `car_id` INT NOT NULL AUTO_INCREMENT,
         `brand` VARCHAR(20) NOT NULL,
-        `model_name` VARCHAR(50) NOT NULL,
+        `model_name` VARCHAR(70) NOT NULL,
         `year` VARCHAR(8),`type` VARCHAR(20),
         `cc` VARCHAR(20),`price` DOUBLE,
         PRIMARY KEY (`car_id`));"""
