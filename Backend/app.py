@@ -20,63 +20,100 @@ def home_page():
 
 @app.route('/api/login',methods=['get'])
 def login():
-    email = 'superuser1'#request.form.get('email')
-    password = 'password' #request.form.get('password')
+    email = 'superuser'#request.form.get('email')
+    password = '123' #request.form.get('password')
+    try:
+        conn = mysql.get_db().cursor()
+        login_query = "SELECT * FROM user WHERE email = '"+email+"'"
+        conn.execute(login_query)
+        row_headers=[x[0] for x in conn.description] 
+        data = conn.fetchall()
+        response =[]
+        for result in data:
+            response.append(dict(zip(row_headers,result)))
+        mysql.get_db().commit()
+        conn.close()
+        response = response[0]
+        if response['password'] == password:
+            return jsonify(
+            {
+                "response": response
+            }
+        )
+        else:
+            return jsonify(
+            {
+                "response": None,
+                "error": "The password you've entered is incorrect"
+            }
+        )
+    except:
+        return jsonify(
+            {
+                "response": None,
+                "error": "The email you've entered is incorrect"
+            }
+        ) 
+
+
+@app.route('/api/register',methods=['get'])
+def register():
+    email = 'testuser@email.com'#request.form.get('email')
+    password = '123' #request.form.get('password')
     conn = mysql.get_db().cursor()
-    car_query = "SELECT * FROM user WHERE email = '"+email+"'"
+    login_query = "SELECT * FROM user WHERE email = '"+email+"'"
+    conn.execute(login_query)
+    mysql.get_db().commit()
+    if len(conn.fetchall()) > 0:
+        return jsonify(
+            {
+                "response": None,
+                "error": "The account you've entered already exists."
+            }
+        )
+    else:
+        register_query = """
+            INSERT INTO `user` (`email`, `password`)
+            values ('"""+email+"""','"""+password+"""')
+        """
+        conn.execute(register_query)
+        mysql.get_db().commit()
+        conn.close()
+        return jsonify(
+            {
+                "response": "User added successfully",
+                
+            }
+        )
+
+@app.route('/api/predict/<args>',methods=['GET'])
+def predict(args):
+    result = make_prediction(np.fromstring(args,dtype=int,sep=','))
+    keys = {'MPV (Multi-purpose vehicle)':'MVP',
+    'Eco car':'Eco car',
+    'Sedans':'Sedan',
+    'SUVs (Sport Utility Vechicle)':'SUV',
+    'Pickup Trucks':'Pickup truck',
+    'nan':'nan',
+    'Hatchbacks':'Hatchback'}
+    cars = getCarsByPredict(keys[result])
+    return jsonify(
+        {
+            "result": result,
+            "cars": cars
+        }
+    )
+
+@app.route('/api/getCars/<args>',methods=['GET'])
+def getAllCars(args):
+    conn = mysql.get_db().cursor()
+    car_query = "SELECT * FROM car_detail"
     conn.execute(car_query)
     row_headers=[x[0] for x in conn.description] 
     data = conn.fetchall()
     response =[]
     for result in data:
         response.append(dict(zip(row_headers,result)))
-    
-    print(response)
-    #if response[0]['email'] == email and response[0]['password'] == password:
-
-
-    mysql.get_db().commit()
-    conn.close()
-    return jsonify(
-        {
-            "response": response
-        }
-    )
-
-@app.route('/api/register',methods=['post'])
-def register():
-    email = request.form.get('email')
-    password = request.form.get('password')
-    conn = mysql.get_db().cursor()
-    car_query = """
-        INSERT INTO `user` (`email`, `password`)
-        values ('"""+email+"""','"""+password+"""')
-    """
-    conn.execute(car_query)
-    
-    mysql.get_db().commit()
-    conn.close()
-    return jsonify(
-        {
-            "response": "Successfully added"
-        }
-    )
-
-@app.route('/api/predict/<args>',methods=['GET'])
-def predict(args):
-    result = make_prediction(np.fromstring(args,dtype=int,sep=','))
-    return jsonify(
-        {
-            "result": result
-        }
-    )
-
-@app.route('/api/getCars',methods=['GET'])
-def getAllCars():
-    conn = mysql.get_db().cursor()
-    car_query = "SELECT * FROM car_detail"
-    conn.execute(car_query)
-    response = conn.fetchall()
     mysql.get_db().commit()
     conn.close()
     return jsonify(
@@ -85,12 +122,26 @@ def getAllCars():
         }
     )
 
+def getCarsByPredict(args):
+    conn = mysql.get_db().cursor()
+    car_query = "SELECT * FROM car_detail WHERE type = '"+args+"'"
+    print(car_query)
+    conn.execute(car_query)
+    row_headers=[x[0] for x in conn.description] 
+    data = conn.fetchall()
+    response =[]
+    for result in data:
+        response.append(dict(zip(row_headers,result)))
+    mysql.get_db().commit()
+    conn.close()
+    return response
+
 @app.route('/api/setFavCars/<user_id>/<car_id>',methods=['GET'])
 def setFavCar(user_id,car_id):
     conn = mysql.get_db().cursor()
     car_query = """
         INSERT INTO `favorite_car` (`user_id`, `car_id`, `active`)
-        values ('"""+user_id+"""','"""+car_id+"""', 'TRUE') ON DUPLICATE KEY UPDATE `active` = NOT active
+        values ('"""+user_id+"""','"""+car_id+"""', TRUE) ON DUPLICATE KEY UPDATE `active` = NOT active
     """
     conn.execute(car_query)
     mysql.get_db().commit()
