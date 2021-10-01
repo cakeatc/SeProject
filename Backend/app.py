@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS, cross_origin
 from flaskext.mysql import MySQL
 import pickle
 import numpy as np
@@ -7,6 +8,8 @@ import os
 import pandas as pd
 
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 mysql = MySQL()
 app.config['MYSQL_DATABASE_USER'] = 'SenierProject'
@@ -19,6 +22,7 @@ def home_page():
     return "<p>This is home page</p>"
 
 @app.route('/api/login',methods=['POST'])
+@cross_origin()
 def login():
     email = request.form.get('email')
     password = request.form.get('password')
@@ -81,6 +85,7 @@ def getAddedUser(email,password):
     )
 
 @app.route('/api/register',methods=['POST'])
+@cross_origin()
 def register():
     email = request.form.get('email')
     password = request.form.get('password')
@@ -106,6 +111,7 @@ def register():
         getAddedUser(email,password)
 
 @app.route('/api/predict/<args>',methods=['GET'])
+@cross_origin()
 def predict(args):
     result = make_prediction(np.fromstring(args,dtype=int,sep=','))
     keys = {'MPV (Multi-purpose vehicle)':'MVP',
@@ -124,6 +130,7 @@ def predict(args):
     )
 
 @app.route('/api/getCars',methods=['GET'])
+@cross_origin()
 def getAllCars():
     conn = mysql.get_db().cursor()
     car_query = "SELECT * FROM car_detail"
@@ -142,6 +149,7 @@ def getAllCars():
     )
 
 @app.route('/api/getCars/<args>',methods=['GET'])
+@cross_origin()
 def getCarsByPredict(args):
     conn = mysql.get_db().cursor()
     car_query = "SELECT * FROM car_detail WHERE type = '"+args+"'"
@@ -157,6 +165,7 @@ def getCarsByPredict(args):
     return response
 
 @app.route('/api/setFavCars/<user_id>/<car_id>',methods=['GET'])
+@cross_origin()
 def setFavCar(user_id,car_id):
     conn = mysql.get_db().cursor()
     car_query = """
@@ -173,6 +182,7 @@ def setFavCar(user_id,car_id):
     )
 
 @app.route('/api/getFavCars/<user_id>/<car_id>',methods=['GET'])
+@cross_origin()
 def getFavCar(user_id,car_id):
     conn = mysql.get_db().cursor()
     car_query = "SELECT * FROM favorite_car WHERE '"+user_id+"','"+car_id+"'"
