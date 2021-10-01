@@ -175,23 +175,28 @@ def setFavCar(user_id,car_id):
     conn.execute(car_query)
     mysql.get_db().commit()
     conn.close()
-    return jsonify(
-        {
-            "response": "Successfully added"
-        }
-    )
+    
+    return getFavCar(user_id)
 
-@app.route('/api/getFavCars/<user_id>/<car_id>',methods=['GET'])
+@app.route('/api/getFavCars/<user_id>',methods=['GET'])
 @cross_origin()
-def getFavCar(user_id,car_id):
+def getFavCar(user_id):
     conn = mysql.get_db().cursor()
-    car_query = "SELECT * FROM favorite_car WHERE '"+user_id+"','"+car_id+"'"
+    car_query = """SELECT fc.user_id, fc.car_id, fc.active, cd.brand, cd.model_name, cd.year, cd.type, cd.cc, cd.price 
+                    FROM favorite_car fc 
+                    JOIN car_detail cd on cd.car_id = fc.car_id 
+                    WHERE fc.user_id = '"""+user_id+"""' AND fc.active = TRUE"""
     conn.execute(car_query)
+    row_headers=[x[0] for x in conn.description] 
+    data = conn.fetchall()
+    response =[]
+    for result in data:
+        response.append(dict(zip(row_headers,result)))
     mysql.get_db().commit()
     conn.close()
     return jsonify(
         {
-            "response": "Successfully added"
+            "response": response
         }
     )
 
