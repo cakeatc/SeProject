@@ -12,8 +12,8 @@ cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 mysql = MySQL()
-app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_DB'] = 'car_sen'
+app.config['MYSQL_DATABASE_USER'] = 'SenierProject'
+app.config['MYSQL_DATABASE_DB'] = 'carre'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
 
