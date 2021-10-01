@@ -9,8 +9,8 @@ import pandas as pd
 app = Flask(__name__)
 
 mysql = MySQL()
-app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_DB'] = 'car_sen'
+app.config['MYSQL_DATABASE_USER'] = 'SenierProject'
+app.config['MYSQL_DATABASE_DB'] = 'carre'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
 
@@ -18,10 +18,10 @@ mysql.init_app(app)
 def home_page():
     return "<p>This is home page</p>"
 
-@app.route('/api/login',methods=['get'])
+@app.route('/api/login',methods=['POST'])
 def login():
-    email = 'superuser'#request.form.get('email')
-    password = '123' #request.form.get('password')
+    email = request.form.get('email')
+    password = request.form.get('password')
     try:
         conn = mysql.get_db().cursor()
         login_query = "SELECT * FROM user WHERE email = '"+email+"'"
@@ -55,11 +55,35 @@ def login():
             }
         ) 
 
+def getAddedUser(email,password):
+    conn = mysql.get_db().cursor()
+    login_query = "SELECT * FROM user WHERE email = '"+email+"'"
+    conn.execute(login_query)
+    row_headers=[x[0] for x in conn.description] 
+    data = conn.fetchall()
+    response =[]
+    for result in data:
+        response.append(dict(zip(row_headers,result)))
+    mysql.get_db().commit()
+    conn.close()
+    response = response[0]
+    if response['password'] == password:
+        return jsonify(
+        {
+            "response": response
+        }
+    )
+    else:
+        return jsonify(
+        {
+            "response": "Error cannot find user"
+        }
+    )
 
-@app.route('/api/register',methods=['get'])
+@app.route('/api/register',methods=['POST'])
 def register():
-    email = 'testuser@email.com'#request.form.get('email')
-    password = '123' #request.form.get('password')
+    email = request.form.get('email')
+    password = request.form.get('password')
     conn = mysql.get_db().cursor()
     login_query = "SELECT * FROM user WHERE email = '"+email+"'"
     conn.execute(login_query)
@@ -79,12 +103,7 @@ def register():
         conn.execute(register_query)
         mysql.get_db().commit()
         conn.close()
-        return jsonify(
-            {
-                "response": "User added successfully",
-                
-            }
-        )
+        getAddedUser(email,password)
 
 @app.route('/api/predict/<args>',methods=['GET'])
 def predict(args):
@@ -104,8 +123,8 @@ def predict(args):
         }
     )
 
-@app.route('/api/getCars/<args>',methods=['GET'])
-def getAllCars(args):
+@app.route('/api/getCars',methods=['GET'])
+def getAllCars():
     conn = mysql.get_db().cursor()
     car_query = "SELECT * FROM car_detail"
     conn.execute(car_query)
@@ -122,6 +141,7 @@ def getAllCars(args):
         }
     )
 
+@app.route('/api/getCars/<args>',methods=['GET'])
 def getCarsByPredict(args):
     conn = mysql.get_db().cursor()
     car_query = "SELECT * FROM car_detail WHERE type = '"+args+"'"
