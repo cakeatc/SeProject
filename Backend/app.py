@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from flaskext.mysql import MySQL
+import json
 import pickle
 import numpy as np
 from model_util import make_prediction
@@ -12,8 +13,8 @@ cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 mysql = MySQL()
-app.config['MYSQL_DATABASE_USER'] = 'SenierProject'
-app.config['MYSQL_DATABASE_DB'] = 'carre'
+app.config['MYSQL_DATABASE_USER'] = 'root'
+app.config['MYSQL_DATABASE_DB'] = 'car_sen'
 app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 mysql.init_app(app)
 
@@ -121,11 +122,10 @@ def predict(args):
     'Pickup Trucks':'Pickup truck',
     'nan':'nan',
     'Hatchbacks':'Hatchback'}
-    cars = getCarsByPredict(keys[result])
     return jsonify(
         {
             "result": result,
-            "cars": cars
+            "cars": getCarsByPredict(keys[result])
         }
     )
 
@@ -148,12 +148,11 @@ def getAllCars():
         }
     )
 
-@app.route('/api/getCars/<args>',methods=['GET'])
-@cross_origin()
+# @app.route('/api/getCars/<args>',methods=['GET'])
+# @cross_origin()
 def getCarsByPredict(args):
     conn = mysql.get_db().cursor()
     car_query = "SELECT * FROM car_detail WHERE type = '"+args+"'"
-    print(car_query)
     conn.execute(car_query)
     row_headers=[x[0] for x in conn.description] 
     data = conn.fetchall()
