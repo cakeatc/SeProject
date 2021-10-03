@@ -122,10 +122,11 @@ def predict(args):
     'Pickup Trucks':'Pickup truck',
     'nan':'nan',
     'Hatchbacks':'Hatchback'}
+    cars = getCarsByPredict(keys[result])
     return jsonify(
         {
             "result": result,
-            "cars": getCarsByPredict(keys[result])
+            "cars": cars
         }
     )
 
@@ -148,8 +149,23 @@ def getAllCars():
         }
     )
 
-# @app.route('/api/getCars/<args>',methods=['GET'])
-# @cross_origin()
+@app.route('/api/getCars/<args>',methods=['GET'])
+@cross_origin()
+def getCarsByType(args):
+    conn = mysql.get_db().cursor()
+    car_query = "SELECT * FROM car_detail WHERE type = '"+args+"'"
+    conn.execute(car_query)
+    row_headers=[x[0] for x in conn.description] 
+    data = conn.fetchall()
+    response =[]
+    for result in data:
+        response.append(dict(zip(row_headers,result)))
+    mysql.get_db().commit()
+    conn.close()
+    return jsonify({
+        "cars":response
+    })
+
 def getCarsByPredict(args):
     conn = mysql.get_db().cursor()
     car_query = "SELECT * FROM car_detail WHERE type = '"+args+"'"
